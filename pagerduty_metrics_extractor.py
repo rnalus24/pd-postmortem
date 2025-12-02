@@ -2,13 +2,18 @@ import requests
 import json
 import csv
 from datetime import datetime, timedelta, timezone
-import pytz # Re-introducing pytz for JST conversion
+import pytz
+import sys # <--- ADD THIS LINE!
 
-# PAGERDUTY_API_KEY = "u+nzhLQjt3h9mV2xviKw" # Get this from Configuration -> API Access
+PAGERDUTY_API_KEY = "" # Initialize as empty string; it will be overwritten by sys.argv[1]
+
+# Read the API key from command-line arguments
 if len(sys.argv) < 2:
     print("Error: PagerDuty API Key not provided as a command-line argument.")
     sys.exit(1) # Exit with an error code
 PAGERDUTY_API_KEY = sys.argv[1]
+
+
 # PAGERDUTY_SUBDOMAIN = "rakpd.pagerduty.com" #YOUR_SUBDOMAIN e.g., yourcompany.pagerduty.com
 
 HEADERS = {
