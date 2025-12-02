@@ -18,11 +18,11 @@ BASE_URL = f"https://api.pagerduty.com"
 # --- Configuration for filtering ---
 # Add the IDs of the teams you want to filter by.
 # Example: PAGERDUTY_TEAM_IDS = ["T1234567890ABCDEF", "TFEDCBA0987654321"]
-PAGERDUTY_TEAM_IDS = [] # Keep empty list if no team filter is desired
+# PAGERDUTY_TEAM_IDS = [] # Keep empty list if no team filter is desired
 
 # Add the IDs of the services you want to filter by.
 # Example: PAGERDUTY_SERVICE_IDS = ["P1234567890ABCDEF", "PFEDCBA0987654321"]
-PAGERDUTY_SERVICE_IDS = [] # Keep empty list if no service filter is desired
+PAGERDUTY_SERVICE_IDS = [PJ9IYQT] # Keep empty list if no service filter is desired
 # --- END Configuration ---
 
 
@@ -31,8 +31,6 @@ def get_incidents(since, until, team_ids=None, service_ids=None):
     offset = 0
     limit = 100 # Max limit per request
 
-    if team_ids is None:
-        team_ids = []
     if service_ids is None:
         service_ids = []
 
@@ -46,8 +44,6 @@ def get_incidents(since, until, team_ids=None, service_ids=None):
         "limit": limit
     }
 
-    if team_ids:
-        params["team_ids[]"] = team_ids
     if service_ids:
         params["service_ids[]"] = service_ids
 
