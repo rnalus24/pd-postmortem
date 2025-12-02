@@ -115,9 +115,9 @@ def get_incident_notes(incident_id):
 
 
 def main():
-    # Example: Incidents from the last 1 day.
+    # Example: Incidents from the last 7 days.
     until = datetime.now(timezone.utc)
-    since = until - timedelta(days=1)
+    since = until - timedelta(days=7)
 
     incidents = get_incidents(
         since,
