@@ -51,25 +51,11 @@ def get_incidents(since, until, team_ids=None, service_ids=None):
     if service_ids:
         params["service_ids[]"] = service_ids
 
-    # --- DEBUG PRINTS START for get_incidents ---
-    print(f"--- Debugging get_incidents API Call ---")
-    print(f"Request URL: {BASE_URL}/incidents")
-    print(f"Request Headers: {HEADERS}")
-    print(f"Request Parameters: {params}")
-    # --- END DEBUG PRINTS ---
-
     while True:
         response = requests.get(f"{BASE_URL}/incidents", headers=HEADERS, params=params)
         response.raise_for_status() # Raises an HTTPError for bad responses (4xx or 5xx)
 
         data = response.json() # First, parse the JSON response into a Python dictionary
-
-        # --- DEBUG PRINTS START for get_incidents ---
-        print(f"API Response Status Code: {response.status_code}")
-        print(f"API Response Data (first 500 chars): {json.dumps(data, indent=2)[:500]}...")
-        print(f"Number of incidents received in this page: {len(data.get('incidents', []))}")
-        print(f"PagerDuty 'more' flag: {data.get('more')}")
-        # --- END DEBUG PRINTS ---
 
         incidents = data.get("incidents", []) # Then, get the list of incidents from the dictionary
 
@@ -114,12 +100,12 @@ def get_incident_notes(incident_id):
 
 
 def main():
-    # --- MODIFIED: Incidents specifically for the month of October 2025 (UTC) ---
-    # Define the start of October 2025 in UTC
-    since = datetime(2025, 10, 1, 0, 0, 0, tzinfo=timezone.utc)
+    # --- MODIFIED: Incidents specifically for the month of November 2025 (UTC) ---
+    # Define the start of November 2025 in UTC
+    since = datetime(2025, 11, 1, 0, 0, 0, tzinfo=timezone.utc)
 
-    # Define the end of October 2025 (i.e., the start of November 1st, 2025) in UTC
-    until = datetime(2025, 11, 1, 0, 0, 0, tzinfo=timezone.utc)
+    # Define the end of November 2025 (i.e., the start of December 1st, 2025) in UTC
+    until = datetime(2025, 12, 1, 0, 0, 0, tzinfo=timezone.utc)
 
     print(f"Reporting period (UTC): {since} to {until}")
     # --- END MODIFIED ---
@@ -165,7 +151,7 @@ def main():
             "Notes": incident_notes
         })
 
-    filename = f"pagerduty_incidents_october_2025_utc.csv" # Updated filename to reflect UTC
+    filename = f"pagerduty_incidents_november_2025_utc.csv" # Updated filename to reflect November
     with open(filename, "w", newline="", encoding="utf-8") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=csv_headers)
         writer.writeheader()
