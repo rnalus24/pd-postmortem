@@ -1,13 +1,12 @@
-
 // Jenkinsfile
+
 pipeline {
     agent any // Or a specific agent label if you have one, e.g., agent { label 'python-agent' }
 
+    // Define general environment variables here if they are NOT sensitive
     environment {
-        // Retrieve the API Key from Jenkins Credentials
-        PAGERDUTY_API_KEY = credentials('PAGERDUTY_API_KEY')
-        PAGERDUTY_SUBDOMAIN = "rakpd.pagerduty.com" // e.g., "mycompany"
-        OUTPUT_FILE = "pagerduty_incidents_with_notes.csv"
+        // PAGERDUTY_SUBDOMAIN is hardcoded in Python script; if you want to pass it:
+        // PAGERDUTY_SUBDOMAIN = "rakpd.pagerduty.com"
         PYTHON_SCRIPT_FILE = "pagerduty_metrics_extractor.py"
     }
 
@@ -17,35 +16,24 @@ pipeline {
                 // Ensure Python and pip are available
                 sh 'which python3'
                 sh 'which pip3'
-
                 // Create a virtual environment
                 sh 'python3 -m venv venv'
                 // Activate the virtual environment and install dependencies
-                // Use 'pip' from the venv directly, not 'pip3' from system
                 sh '. venv/bin/activate && pip install requests pytz'
                 echo "Python environment prepared."
             }
         }
+
         stage('Generate PagerDuty Report') {
             steps {
-                // --- MODIFIED SECTION ---
-                withCredentials([string(credentialsId: 'PAGERDUTY_API_KEY', variable: 'PD_API_KEY')]) {
-                    sh '''
+                // Securely retrieve the PagerDuty API Key from Jenkins Credentials
+                // and pass it as a command-line argument to the Python script.
+                withCredentials([string(credentialsId: 'PAGERDUTY_API_KEY', variable: 'PD_API_KEY_SECRET')]) {
+                    sh """
                         . venv/bin/activate
-                        python3 pagerduty_metrics_extractor.py "$PD_API_KEY"
-                    '''
+                        python3 "${PYTHON_SCRIPT_FILE}" "$PD_API_KEY_SECRET"
+                    """
                 }
-            }  
-        stage('Run Python Script') {
-            steps {
-                // Activate venv and run the script, passing environment variables
-                sh """
-                    . venv/bin/activate && \\
-                    PAGERDUTY_API_KEY="${PAGERDUTY_API_KEY}" \\
-                    PAGERDUTY_SUBDOMAIN="${PAGERDUTY_SUBDOMAIN}" \\
-                    OUTPUT_FILE="${OUTPUT_FILE}" \\
-                    python3 "${PYTHON_SCRIPT_FILE}"
-                """
                 echo "Python script executed."
             }
         }
@@ -66,14 +54,18 @@ pipeline {
         }
     }
 
+    // Post-build actions (always, failure, success, etc.)
     post {
         always {
-            // Clean up the generated script file
-            sh "rm -f ${PYTHON_SCRIPT_FILE}"
+            // This runs regardless of build outcome
+            deleteDir() // Clean up the entire workspace
+            echo 'Workspace cleaned up.'
         }
         failure {
             echo 'Pipeline failed. Check logs for details.'
         }
+        success {
+            echo 'Pipeline completed successfully.'
+        }
     }
 }
-
