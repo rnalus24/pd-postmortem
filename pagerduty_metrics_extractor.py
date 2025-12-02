@@ -96,9 +96,9 @@ def get_incident_notes(incident_id):
             print(f"  Entry {i+1} Type: {entry.get('type')}")
             if entry.get("type") == "annotate_log_entry":
                 content = entry.get('channel', {}).get('content', 'No content found')
-                print(f"    Found annotate_log_entry. Content: {content[:100]}...") # Print first 100 chars
-            # Uncomment the line below for a full dump of each log entry if needed
-            # print(f"  Full Entry {i+1}: {json.dumps(entry, indent=2)}")
+                print(f"    Found annotate_log_entry. Content: {content[:100]}...")
+            # --- The line below is now UNCOMMENTED for full debug ---
+            print(f"  Full Entry {i+1}: {json.dumps(entry, indent=2)}")
         print(f"More log entries for this incident? {data.get('more')}")
         # --- DEBUG PRINT STATEMENTS END ---
 
