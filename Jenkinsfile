@@ -26,6 +26,16 @@ pipeline {
                 echo "Python environment prepared."
             }
         }
+        stage('Generate PagerDuty Report') {
+            steps {
+                // --- MODIFIED SECTION ---
+                withCredentials([string(credentialsId: 'PAGERDUTY_API_KEY', variable: 'PD_API_KEY')]) {
+                    sh '''
+                        . venv/bin/activate
+                        python3 pagerduty_metrics_extractor.py "$PD_API_KEY"
+                    '''
+                }
+                
         stage('Run Python Script') {
             steps {
                 // Activate venv and run the script, passing environment variables
