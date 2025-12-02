@@ -3,8 +3,6 @@ import json
 import csv
 from datetime import datetime, timedelta, timezone # Import timezone
 
-# No need to import pytz if we're not using it
-
 PAGERDUTY_API_KEY = "u+nzhLQjt3h9mV2xviKw" # Get this from Configuration -> API Access
 # PAGERDUTY_SUBDOMAIN = "rakpd.pagerduty.com" #YOUR_SUBDOMAIN e.g., yourcompany.pagerduty.com
 
@@ -53,11 +51,25 @@ def get_incidents(since, until, team_ids=None, service_ids=None):
     if service_ids:
         params["service_ids[]"] = service_ids
 
+    # --- DEBUG PRINTS START for get_incidents ---
+    print(f"--- Debugging get_incidents API Call ---")
+    print(f"Request URL: {BASE_URL}/incidents")
+    print(f"Request Headers: {HEADERS}")
+    print(f"Request Parameters: {params}")
+    # --- END DEBUG PRINTS ---
+
     while True:
         response = requests.get(f"{BASE_URL}/incidents", headers=HEADERS, params=params)
         response.raise_for_status() # Raises an HTTPError for bad responses (4xx or 5xx)
 
         data = response.json() # First, parse the JSON response into a Python dictionary
+
+        # --- DEBUG PRINTS START for get_incidents ---
+        print(f"API Response Status Code: {response.status_code}")
+        print(f"API Response Data (first 500 chars): {json.dumps(data, indent=2)[:500]}...")
+        print(f"Number of incidents received in this page: {len(data.get('incidents', []))}")
+        print(f"PagerDuty 'more' flag: {data.get('more')}")
+        # --- END DEBUG PRINTS ---
 
         incidents = data.get("incidents", []) # Then, get the list of incidents from the dictionary
 
