@@ -35,7 +35,7 @@ pipeline {
                         python3 pagerduty_metrics_extractor.py "$PD_API_KEY"
                     '''
                 }
-                
+            }  
         stage('Run Python Script') {
             steps {
                 // Activate venv and run the script, passing environment variables
