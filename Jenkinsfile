@@ -1,4 +1,4 @@
-# ```groovy
+
 // Jenkinsfile
 pipeline {
     agent any // Or a specific agent label if you have one, e.g., agent { label 'python-agent' }
@@ -188,4 +188,4 @@ if __name__ == "__main__":
         }
     }
 }
-# ```
+
