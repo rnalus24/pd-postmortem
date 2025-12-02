@@ -29,10 +29,11 @@ pipeline {
                 // Securely retrieve the PagerDuty API Key from Jenkins Credentials
                 // and pass it as a command-line argument to the Python script.
                 withCredentials([string(credentialsId: 'PAGERDUTY_API_KEY', variable: 'PD_API_KEY_SECRET')]) {
-                    sh """
-                        . venv/bin/activate
-                        python3 "${PYTHON_SCRIPT_FILE}" "$PD_API_KEY_SECRET"
-                    """
+                    // --- OPTION 1 IMPLEMENTATION ---
+                    // Using a single-quoted string to prevent Groovy String interpolation
+                    // The secret is passed as a shell variable to the python script
+                    sh 'export PAGERDUTY_API_KEY_ARG="$PD_API_KEY_SECRET" && . venv/bin/activate && python3 "${PYTHON_SCRIPT_FILE}" "$PAGERDUTY_API_KEY_ARG"'
+                    // --- END OPTION 1 IMPLEMENTATION ---
                 }
                 echo "Python script executed."
             }
