@@ -18,11 +18,11 @@ BASE_URL = f"https://api.pagerduty.com"
 # --- Configuration for filtering ---
 # Add the IDs of the teams you want to filter by.
 # Example: PAGERDUTY_TEAM_IDS = ["T1234567890ABCDEF", "TFEDCBA0987654321"]
-# PAGERDUTY_TEAM_IDS = [] # Keep empty list if no team filter is desired
+PAGERDUTY_TEAM_IDS = [] # Keep empty list if no team filter is desired
 
 # Add the IDs of the services you want to filter by.
 # Example: PAGERDUTY_SERVICE_IDS = ["P1234567890ABCDEF", "PFEDCBA0987654321"]
-PAGERDUTY_SERVICE_IDS = ["PJ9IYQT"] # Keep empty list if no service filter is desired
+PAGERDUTY_SERVICE_IDS = ["PJ9IYQT"] # Corrected: The Service ID is a string, replace with your actual ID(s)
 # --- END Configuration ---
 
 
@@ -31,6 +31,8 @@ def get_incidents(since, until, team_ids=None, service_ids=None):
     offset = 0
     limit = 100 # Max limit per request
 
+    if team_ids is None:
+        team_ids = []
     if service_ids is None:
         service_ids = []
 
@@ -44,6 +46,8 @@ def get_incidents(since, until, team_ids=None, service_ids=None):
         "limit": limit
     }
 
+    if team_ids:
+        params["team_ids[]"] = team_ids
     if service_ids:
         params["service_ids[]"] = service_ids
 
@@ -51,11 +55,9 @@ def get_incidents(since, until, team_ids=None, service_ids=None):
         response = requests.get(f"{BASE_URL}/incidents", headers=HEADERS, params=params)
         response.raise_for_status() # Raises an HTTPError for bad responses (4xx or 5xx)
 
-        # --- FIX START: Correctly parse JSON and get 'incidents' ---
         data = response.json() # First, parse the JSON response into a Python dictionary
 
         incidents = data.get("incidents", []) # Then, get the list of incidents from the dictionary
-        # --- FIX END ---
 
         all_incidents.extend(incidents)
 
@@ -85,11 +87,24 @@ def get_incident_notes(incident_id):
 
         log_entries = data.get("log_entries", [])
 
-        for entry in log_entries:
-            # Check for 'annotate_log_entry' type to get notes
+        # --- DEBUG PRINT STATEMENTS START ---
+        print(f"--- Debugging notes for Incident ID: {incident_id} ---")
+        print(f"API Request URL: {response.url}") # Show the actual URL called
+        print(f"API Response Status: {response.status_code}")
+        print(f"Log entries fetched for this page: {len(log_entries)}")
+        for i, entry in enumerate(log_entries):
+            print(f"  Entry {i+1} Type: {entry.get('type')}")
             if entry.get("type") == "annotate_log_entry":
-                # The note content is usually in 'channel.content' for annotate_log_entry types
-                notes.append(entry.get("channel", {}).get("content", ""))
+                content = entry.get('channel', {}).get('content', 'No content found')
+                print(f"    Found annotate_log_entry. Content: {content[:100]}...") # Print first 100 chars
+            # Uncomment the line below for a full dump of each log entry if needed
+            # print(f"  Full Entry {i+1}: {json.dumps(entry, indent=2)}")
+        print(f"More log entries for this incident? {data.get('more')}")
+        # --- DEBUG PRINT STATEMENTS END ---
+
+        for entry in log_entries:
+            if entry.get("type") == "annotate_log_entry":
+                notes.append(entry.get("channel", {}).get("content", "")) # The note content
 
         if not data.get("more"):
             break
@@ -100,17 +115,14 @@ def get_incident_notes(incident_id):
 
 
 def main():
-    # Example: Incidents from the last 7 days.
-
-    # --- FIX START: Use timezone-aware UTC ---
+    # Example: Incidents from the last 1 day.
     until = datetime.now(timezone.utc)
-    # --- FIX END ---
-
-    since = until - timedelta(days=7)
+    since = until - timedelta(days=1)
 
     incidents = get_incidents(
         since,
         until,
+        team_ids=PAGERDUTY_TEAM_IDS,
         service_ids=PAGERDUTY_SERVICE_IDS
     )
 
