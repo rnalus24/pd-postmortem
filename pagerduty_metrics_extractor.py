@@ -1,7 +1,8 @@
 import requests
 import json
 import csv
-from datetime import datetime, timedelta, timezone # Import timezone
+from datetime import datetime, timedelta, timezone
+import pytz # Import pytz
 
 PAGERDUTY_API_KEY = "u+nzhLQjt3h9mV2xviKw" # Get this from Configuration -> API Access
 # PAGERDUTY_SUBDOMAIN = "rakpd.pagerduty.com" #YOUR_SUBDOMAIN e.g., yourcompany.pagerduty.com
@@ -100,48 +101,56 @@ def get_incident_notes(incident_id):
 
 
 def main():
-    # --- MODIFIED: Incidents for the specific month of October 2025 ---
-    # Define the start of October 2025
-    since = datetime(2025, 10, 1, 0, 0, 0, tzinfo=timezone.utc) # October 1st, 2025, 00:00:00 UTC
+    # --- MODIFIED: Incidents for October 2025, defined in JST, then converted to UTC ---
 
-    # Define the end of October 2025 (start of November 1st, 2025)
-    until = datetime(2025, 11, 1, 0, 0, 0, tzinfo=timezone.utc) # November 1st, 2025, 00:00:00 UTC
-    # --- END MODIFIED ---
+    # Define the JST timezone object
+    jst = pytz.timezone('Asia/Tokyo')
+
+    # Define the start and end of October 2025 in JST
+    # October 1st, 2025, 00:00:00 JST
+    since_jst = jst.localize(datetime(2025, 10, 1, 0, 0, 0))
+    # November 1st, 2025, 00:00:00 JST
+    until_jst = jst.localize(datetime(2025, 11, 1, 0, 0, 0))
+
+    # Convert JST datetimes to UTC for the PagerDuty API
+    since_utc = since_jst.astimezone(timezone.utc)
+    until_utc = until_jst.astimezone(timezone.utc)
+
+    print(f"Reporting period (JST): {since_jst} to {until_jst}")
+    print(f"Reporting period (UTC for API): {since_utc} to {until_utc}")
 
     incidents = get_incidents(
-        since,
-        until,
+        since_utc, # Use the UTC converted time
+        until_utc, # Use the UTC converted time
         team_ids=PAGERDUTY_TEAM_IDS,
         service_ids=PAGERDUTY_SERVICE_IDS
     )
+    # --- END MODIFIED ---
 
     print(f"Found {len(incidents)} incidents.")
 
     output_data = []
-    # Define the fields for your CSV, including a custom 'Notes' field
     csv_headers = [
-        "Incident Number", # New header for human-readable ID
-        "Incident UUID",   # Header for the API's unique ID
+        "Incident Number",
+        "Incident UUID",
         "Title", "Service", "Status", "Created At",
         "Resolved At", "Assigned To", "Urgency", "Notes"
     ]
 
     for incident in incidents:
-        incident_id = incident.get("id") # This is the UUID
-        incident_number = incident.get("incident_number") # This is the human-readable number
+        incident_id = incident.get("id")
+        incident_number = incident.get("incident_number")
 
-        incident_notes = get_incident_notes(incident_id) # Fetch notes for each incident
+        incident_notes = get_incident_notes(incident_id)
 
-        # Handle potential missing 'assignments' key
         assigned_to_list = []
         if incident.get("assignments"):
             assigned_to_list = [assignee.get("summary", "") for assignee in incident.get("assignments", [])]
         assigned_to = ", ".join(assigned_to_list)
 
-
         output_data.append({
-            "Incident Number": incident_number, # Populate with the human-readable number
-            "Incident UUID": incident_id,       # Populate with the UUID
+            "Incident Number": incident_number,
+            "Incident UUID": incident_id,
             "Title": incident.get("title"),
             "Urgency": incident.get("urgency"),
             "Service": incident.get("service", {}).get("summary"),
@@ -152,9 +161,7 @@ def main():
             "Notes": incident_notes
         })
 
-    # Write to CSV
-    # Changed filename to reflect the specific month
-    filename = f"pagerduty_incidents_october_2025.csv"
+    filename = f"pagerduty_incidents_october_2025_jst.csv" # Added _jst to filename for clarity
     with open(filename, "w", newline="", encoding="utf-8") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=csv_headers)
         writer.writeheader()
