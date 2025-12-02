@@ -220,9 +220,9 @@ def parse_incident_metrics(incident, all_log_entries):
 
 
 def main():
-    # --- Reporting period for November 2025 (UTC) ---
-    since = datetime(2025, 11, 1, 0, 0, 0, tzinfo=timezone.utc)
-    until = datetime(2025, 12, 1, 0, 0, 0, tzinfo=timezone.utc)
+    # --- Reporting period for October 2025 (UTC) ---
+    since = datetime(2025, 10, 1, 0, 0, 0, tzinfo=timezone.utc)
+    until = datetime(2025, 11, 1, 0, 0, 0, tzinfo=timezone.utc)
 
     print(f"Reporting period (UTC): {since} to {until}")
 
@@ -297,7 +297,7 @@ def main():
             "Escalations": incident_metrics["Escalations"]
         })
 
-    filename = f"pagerduty_incidents_november_2025_metrics.csv"
+    filename = f"pagerduty_incidents_october_2025_metrics.csv"
     with open(filename, "w", newline="", encoding="utf-8") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=csv_headers)
         writer.writeheader()
