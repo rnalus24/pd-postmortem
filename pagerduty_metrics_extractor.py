@@ -87,7 +87,7 @@ def get_incident_notes(incident_id):
 
         log_entries = data.get("log_entries", [])
 
-        # --- DEBUG PRINT STATEMENTS START ---
+        # --- DEBUG PRINT STATEMENTS START (Remove or comment out when no longer needed) ---
         print(f"--- Debugging notes for Incident ID: {incident_id} ---")
         print(f"API Request URL: {response.url}") # Show the actual URL called
         print(f"API Response Status: {response.status_code}")
@@ -117,7 +117,7 @@ def get_incident_notes(incident_id):
 def main():
     # Example: Incidents from the last 7 days.
     until = datetime.now(timezone.utc)
-    since = until - timedelta(days=7)
+    since = until - timedelta(days=7) # Updated to 7 days
 
     incidents = get_incidents(
         since,
@@ -131,12 +131,16 @@ def main():
     output_data = []
     # Define the fields for your CSV, including a custom 'Notes' field
     csv_headers = [
-        "Incident ID", "Title", "Service", "Status", "Created At",
+        "Incident Number", # New header for human-readable ID
+        "Incident UUID",   # Header for the API's unique ID
+        "Title", "Service", "Status", "Created At",
         "Resolved At", "Assigned To", "Urgency", "Notes"
     ]
 
     for incident in incidents:
-        incident_id = incident.get("id")
+        incident_id = incident.get("id") # This is the UUID
+        incident_number = incident.get("incident_number") # This is the human-readable number
+
         incident_notes = get_incident_notes(incident_id) # Fetch notes for each incident
 
         # Handle potential missing 'assignments' key
@@ -147,7 +151,8 @@ def main():
 
 
         output_data.append({
-            "Incident ID": incident_id,
+            "Incident Number": incident_number, # Populate with the human-readable number
+            "Incident UUID": incident_id,       # Populate with the UUID
             "Title": incident.get("title"),
             "Urgency": incident.get("urgency"),
             "Service": incident.get("service", {}).get("summary"),
