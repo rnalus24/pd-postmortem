@@ -111,7 +111,6 @@ def main():
     incidents = get_incidents(
         since,
         until,
-        team_ids=PAGERDUTY_TEAM_IDS,
         service_ids=PAGERDUTY_SERVICE_IDS
     )
 
