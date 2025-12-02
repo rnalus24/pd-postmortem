@@ -1,8 +1,9 @@
 import requests
 import json
 import csv
-from datetime import datetime, timedelta, timezone
-import pytz # Import pytz
+from datetime import datetime, timedelta, timezone # Import timezone
+
+# No need to import pytz if we're not using it
 
 PAGERDUTY_API_KEY = "u+nzhLQjt3h9mV2xviKw" # Get this from Configuration -> API Access
 # PAGERDUTY_SUBDOMAIN = "rakpd.pagerduty.com" #YOUR_SUBDOMAIN e.g., yourcompany.pagerduty.com
@@ -101,31 +102,22 @@ def get_incident_notes(incident_id):
 
 
 def main():
-    # --- MODIFIED: Incidents for October 2025, defined in JST, then converted to UTC ---
+    # --- MODIFIED: Incidents specifically for the month of October 2025 (UTC) ---
+    # Define the start of October 2025 in UTC
+    since = datetime(2025, 10, 1, 0, 0, 0, tzinfo=timezone.utc)
 
-    # Define the JST timezone object
-    jst = pytz.timezone('Asia/Tokyo')
+    # Define the end of October 2025 (i.e., the start of November 1st, 2025) in UTC
+    until = datetime(2025, 11, 1, 0, 0, 0, tzinfo=timezone.utc)
 
-    # Define the start and end of October 2025 in JST
-    # October 1st, 2025, 00:00:00 JST
-    since_jst = jst.localize(datetime(2025, 10, 1, 0, 0, 0))
-    # November 1st, 2025, 00:00:00 JST
-    until_jst = jst.localize(datetime(2025, 11, 1, 0, 0, 0))
-
-    # Convert JST datetimes to UTC for the PagerDuty API
-    since_utc = since_jst.astimezone(timezone.utc)
-    until_utc = until_jst.astimezone(timezone.utc)
-
-    print(f"Reporting period (JST): {since_jst} to {until_jst}")
-    print(f"Reporting period (UTC for API): {since_utc} to {until_utc}")
+    print(f"Reporting period (UTC): {since} to {until}")
+    # --- END MODIFIED ---
 
     incidents = get_incidents(
-        since_utc, # Use the UTC converted time
-        until_utc, # Use the UTC converted time
+        since,
+        until,
         team_ids=PAGERDUTY_TEAM_IDS,
         service_ids=PAGERDUTY_SERVICE_IDS
     )
-    # --- END MODIFIED ---
 
     print(f"Found {len(incidents)} incidents.")
 
@@ -161,7 +153,7 @@ def main():
             "Notes": incident_notes
         })
 
-    filename = f"pagerduty_incidents_october_2025_jst.csv" # Added _jst to filename for clarity
+    filename = f"pagerduty_incidents_october_2025_utc.csv" # Updated filename to reflect UTC
     with open(filename, "w", newline="", encoding="utf-8") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=csv_headers)
         writer.writeheader()
