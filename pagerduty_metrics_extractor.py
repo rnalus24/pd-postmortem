@@ -1,7 +1,7 @@
 import requests
 import json
 import csv
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone # Import timezone
 
 PAGERDUTY_API_KEY = "u+nzhLQjt3h9mV2xviKw" # Get this from Configuration -> API Access
 # PAGERDUTY_SUBDOMAIN = "rakpd.pagerduty.com" #YOUR_SUBDOMAIN e.g., yourcompany.pagerduty.com
@@ -15,7 +15,7 @@ HEADERS = {
 
 BASE_URL = f"https://api.pagerduty.com"
 
-# --- NEW: Configuration for filtering ---
+# --- Configuration for filtering ---
 # Add the IDs of the teams you want to filter by.
 # Example: PAGERDUTY_TEAM_IDS = ["T1234567890ABCDEF", "TFEDCBA0987654321"]
 PAGERDUTY_TEAM_IDS = [] # Keep empty list if no team filter is desired
@@ -23,16 +23,18 @@ PAGERDUTY_TEAM_IDS = [] # Keep empty list if no team filter is desired
 # Add the IDs of the services you want to filter by.
 # Example: PAGERDUTY_SERVICE_IDS = ["P1234567890ABCDEF", "PFEDCBA0987654321"]
 PAGERDUTY_SERVICE_IDS = [] # Keep empty list if no service filter is desired
-# --- END NEW ---
+# --- END Configuration ---
 
-def get_incidents(since, until, team_ids=None, service_ids=None): # Added team_ids and service_ids parameters
+
+def get_incidents(since, until, team_ids=None, service_ids=None):
     all_incidents = []
     offset = 0
     limit = 100 # Max limit per request
 
-    # --- MODIFIED: Add filters to params ---
+    if team_ids is None:
+        team_ids = []
     if service_ids is None:
-        service_ids = [PJ9IYQT]
+        service_ids = []
 
     # Prepare params with filters
     params = {
@@ -48,25 +50,26 @@ def get_incidents(since, until, team_ids=None, service_ids=None): # Added team_i
         params["team_ids[]"] = team_ids
     if service_ids:
         params["service_ids[]"] = service_ids
-    # --- END MODIFIED ---
 
     while True:
         response = requests.get(f"{BASE_URL}/incidents", headers=HEADERS, params=params)
+        response.raise_for_status() # Raises an HTTPError for bad responses (4xx or 5xx)
 
-        response.raise_for_status()
+        # --- FIX START: Correctly parse JSON and get 'incidents' ---
+        data = response.json() # First, parse the JSON response into a Python dictionary
 
-        data = response.get("incidents", [])
-
-        incidents = data.get("incidents", [])
+        incidents = data.get("incidents", []) # Then, get the list of incidents from the dictionary
+        # --- FIX END ---
 
         all_incidents.extend(incidents)
 
-        if not data.get("more"):
+        if not data.get("more"): # Check 'more' from the parsed dictionary
             break
 
         offset += limit
-        params["offset"] = offset # Update offset for subsequent requests
+        params["offset"] = offset # Update offset for subsequent requests for pagination
     return all_incidents
+
 
 def get_incident_notes(incident_id):
     notes = []
@@ -87,30 +90,34 @@ def get_incident_notes(incident_id):
         log_entries = data.get("log_entries", [])
 
         for entry in log_entries:
+            # Check for 'annotate_log_entry' type to get notes
             if entry.get("type") == "annotate_log_entry":
-                notes.append(entry.get("channel", {}).get("content", "")) # The note content
+                # The note content is usually in 'channel.content' for annotate_log_entry types
+                notes.append(entry.get("channel", {}).get("content", ""))
 
         if not data.get("more"):
             break
 
         offset += limit
-        # Update offset for subsequent requests (if there are more pages of notes)
-        params["offset"] = offset
+        params["offset"] = offset # Update offset for subsequent requests for pagination
     return "\n--- NOTE ---\n".join(notes) # Join multiple notes for an incident
+
 
 def main():
     # Example: Incidents from the last 1 day.
+
+    # --- FIX START: Use timezone-aware UTC ---
     until = datetime.now(timezone.utc)
+    # --- FIX END ---
+
     since = until - timedelta(days=1)
 
-    # --- MODIFIED: Pass filters to get_incidents ---
     incidents = get_incidents(
         since,
         until,
         team_ids=PAGERDUTY_TEAM_IDS,
         service_ids=PAGERDUTY_SERVICE_IDS
     )
-    # --- END MODIFIED ---
 
     print(f"Found {len(incidents)} incidents.")
 
@@ -124,7 +131,14 @@ def main():
     for incident in incidents:
         incident_id = incident.get("id")
         incident_notes = get_incident_notes(incident_id) # Fetch notes for each incident
-        assigned_to = ", ".join([assignee.get("summary", "") for assignee in incident.get("assignments", [])])
+
+        # Handle potential missing 'assignments' key
+        assigned_to_list = []
+        if incident.get("assignments"):
+            assigned_to_list = [assignee.get("summary", "") for assignee in incident.get("assignments", [])]
+        assigned_to = ", ".join(assigned_to_list)
+
+
         output_data.append({
             "Incident ID": incident_id,
             "Title": incident.get("title"),
