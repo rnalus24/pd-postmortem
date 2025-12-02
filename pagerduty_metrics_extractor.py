@@ -87,24 +87,11 @@ def get_incident_notes(incident_id):
 
         log_entries = data.get("log_entries", [])
 
-        # --- DEBUG PRINT STATEMENTS START (Remove or comment out when no longer needed) ---
-        print(f"--- Debugging notes for Incident ID: {incident_id} ---")
-        print(f"API Request URL: {response.url}") # Show the actual URL called
-        print(f"API Response Status: {response.status_code}")
-        print(f"Log entries fetched for this page: {len(log_entries)}")
-        for i, entry in enumerate(log_entries):
-            print(f"  Entry {i+1} Type: {entry.get('type')}")
-            if entry.get("type") == "annotate_log_entry":
-                content = entry.get('channel', {}).get('content', 'No content found')
-                print(f"    Found annotate_log_entry. Content: {content[:100]}...")
-            # --- The line below is now UNCOMMENTED for full debug ---
-            print(f"  Full Entry {i+1}: {json.dumps(entry, indent=2)}")
-        print(f"More log entries for this incident? {data.get('more')}")
-        # --- DEBUG PRINT STATEMENTS END ---
-
         for entry in log_entries:
             if entry.get("type") == "annotate_log_entry":
-                notes.append(entry.get("channel", {}).get("content", "")) # The note content
+                # --- FIX APPLIED HERE: Changed 'content' to 'summary' ---
+                notes.append(entry.get("channel", {}).get("summary", ""))
+                # --- END FIX ---
 
         if not data.get("more"):
             break
