@@ -22,7 +22,7 @@ BASE_URL = f"https://api.pagerduty.com"
 
 # Add the IDs of the services you want to filter by.
 # Example: PAGERDUTY_SERVICE_IDS = ["P1234567890ABCDEF", "PFEDCBA0987654321"]
-PAGERDUTY_SERVICE_IDS = [PJ9IYQT] # Keep empty list if no service filter is desired
+PAGERDUTY_SERVICE_IDS = ["PJ9IYQT"] # Keep empty list if no service filter is desired
 # --- END Configuration ---
 
 
