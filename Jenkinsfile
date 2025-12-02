@@ -22,7 +22,7 @@ pipeline {
                 sh 'python3 -m venv venv'
                 // Activate the virtual environment and install dependencies
                 // Use 'pip' from the venv directly, not 'pip3' from system
-                sh '. venv/bin/activate && pip install requests'
+                sh '. venv/bin/activate && pip install requests pytz'
                 echo "Python environment prepared."
             }
         }
