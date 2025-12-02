@@ -282,4 +282,18 @@ def main():
             "Resolved By": incident_metrics["Resolved By"],
             "Auto Resolved": "Yes" if incident_metrics["Auto Resolved"] else "No",
             "Responders": incident_metrics["Responders"],
-            "TTA
+            "TTA (in seconds)": incident_metrics["TTA (in seconds)"],
+            "TTR (in seconds)": incident_metrics["TTR (in seconds)"],
+            "Response Effort (in seconds)": incident_metrics["Response Effort (in seconds)"],
+            "Escalations": incident_metrics["Escalations"]
+        })
+
+    filename = f"pagerduty_incidents_november_2025_metrics.csv"
+    with open(filename, "w", newline="", encoding="utf-8") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=csv_headers)
+        writer.writeheader()
+        writer.writerows(output_data)
+    print(f"Report saved to {filename}")
+
+if __name__ == "__main__":
+    main()
