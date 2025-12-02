@@ -1,7 +1,7 @@
 import requests
 import json
 import csv
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone # Import timezone
 
 PAGERDUTY_API_KEY = "u+nzhLQjt3h9mV2xviKw" # Get this from Configuration -> API Access
 # PAGERDUTY_SUBDOMAIN = "rakpd.pagerduty.com" #YOUR_SUBDOMAIN e.g., yourcompany.pagerduty.com
@@ -19,7 +19,6 @@ def get_incidents(since, until):
     all_incidents = []
     offset = 0
     limit = 100 # Max limit per request
-
     while True:
         params = {
             "since": since.isoformat(),
@@ -34,7 +33,6 @@ def get_incidents(since, until):
         data = response.json()
         incidents = data.get("incidents", [])
         all_incidents.extend(incidents)
-
         if not data.get("more"):
             break
         offset += limit
@@ -44,7 +42,6 @@ def get_incident_notes(incident_id):
     notes = []
     offset = 0
     limit = 100
-
     while True:
         params = {
             "offset": offset,
@@ -55,7 +52,6 @@ def get_incident_notes(incident_id):
         response.raise_for_status()
         data = response.json()
         log_entries = data.get("log_entries", [])
-
         for entry in log_entries:
             if entry.get("type") == "annotate_log_entry":
                 notes.append(entry.get("channel", {}).get("content", "")) # The note content
@@ -66,9 +62,14 @@ def get_incident_notes(incident_id):
 
 def main():
     # Example: Incidents from the last 1 day.
-    until = datetime.utcnow()
-    since = until - timedelta(days=1)
 
+    # --- CHANGE STARTS HERE ---
+    # Use timezone.utc for a timezone-aware UTC datetime object
+    # This is the recommended modern approach in Python
+    until = datetime.now(timezone.utc)
+    # --- CHANGE ENDS HERE ---
+
+    since = until - timedelta(days=1)
     incidents = get_incidents(since, until)
     print(f"Found {len(incidents)} incidents.")
 
@@ -82,9 +83,7 @@ def main():
     for incident in incidents:
         incident_id = incident.get("id")
         incident_notes = get_incident_notes(incident_id) # Fetch notes for each incident
-
         assigned_to = ", ".join([assignee.get("summary", "") for assignee in incident.get("assignments", [])])
-
         output_data.append({
             "Incident ID": incident_id,
             "Title": incident.get("title"),
