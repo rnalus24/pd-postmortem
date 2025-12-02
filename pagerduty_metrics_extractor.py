@@ -261,15 +261,14 @@ def main():
             created_at_utc = datetime.fromisoformat(created_at_utc_str.replace('Z', '+00:00'))
             created_at_jst = created_at_utc.astimezone(JST_TIMEZONE).strftime('%Y-%m-%d %H:%M:%S %Z')
 
-        # Extract Priority name
-        priority_name = incident.get("priority", {}).get("summary", "N/A")
+        # --- FIX APPLIED HERE for 'priority' ---
+        # Get the priority object, defaulting to an empty dict if 'priority' key is missing or None
+        priority_object = incident.get("priority")
+        if priority_object is None:
+            priority_object = {}
+        priority_name = priority_object.get("summary", "N/A")
+        # --- END FIX ---
 
-        # Handle potential missing 'assignments' key (for current assignments, not historical)
-        # We will rely on log entries for historical responders
-        current_assigned_to_list = []
-        if incident.get("assignments"):
-            current_assigned_to_list = [assignee.get("summary", "") for assignee in incident.get("assignments", [])]
-        current_assigned_to = ", ".join(current_assigned_to_list)
 
         output_data.append({
             "Notes": incident_metrics["Notes"],
@@ -283,18 +282,4 @@ def main():
             "Resolved By": incident_metrics["Resolved By"],
             "Auto Resolved": "Yes" if incident_metrics["Auto Resolved"] else "No",
             "Responders": incident_metrics["Responders"],
-            "TTA (in seconds)": incident_metrics["TTA (in seconds)"],
-            "TTR (in seconds)": incident_metrics["TTR (in seconds)"],
-            "Response Effort (in seconds)": incident_metrics["Response Effort (in seconds)"],
-            "Escalations": incident_metrics["Escalations"]
-        })
-
-    filename = f"pagerduty_incidents_november_2025_metrics.csv"
-    with open(filename, "w", newline="", encoding="utf-8") as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=csv_headers)
-        writer.writeheader()
-        writer.writerows(output_data)
-    print(f"Report saved to {filename}")
-
-if __name__ == "__main__":
-    main()
+            "TTA
