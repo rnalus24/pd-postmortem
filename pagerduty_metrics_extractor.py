@@ -89,9 +89,7 @@ def get_incident_notes(incident_id):
 
         for entry in log_entries:
             if entry.get("type") == "annotate_log_entry":
-                # --- FIX APPLIED HERE: Changed 'content' to 'summary' ---
-                notes.append(entry.get("channel", {}).get("summary", ""))
-                # --- END FIX ---
+                notes.append(entry.get("channel", {}).get("summary", "")) # Correctly extract note from 'summary'
 
         if not data.get("more"):
             break
@@ -102,9 +100,13 @@ def get_incident_notes(incident_id):
 
 
 def main():
-    # Example: Incidents from the last 7 days.
-    until = datetime.now(timezone.utc)
-    since = until - timedelta(days=7) # Updated to 7 days
+    # --- MODIFIED: Incidents for the specific month of October 2025 ---
+    # Define the start of October 2025
+    since = datetime(2025, 10, 1, 0, 0, 0, tzinfo=timezone.utc) # October 1st, 2025, 00:00:00 UTC
+
+    # Define the end of October 2025 (start of November 1st, 2025)
+    until = datetime(2025, 11, 1, 0, 0, 0, tzinfo=timezone.utc) # November 1st, 2025, 00:00:00 UTC
+    # --- END MODIFIED ---
 
     incidents = get_incidents(
         since,
@@ -151,11 +153,13 @@ def main():
         })
 
     # Write to CSV
-    with open("pagerduty_incidents_with_notes.csv", "w", newline="", encoding="utf-8") as csvfile:
+    # Changed filename to reflect the specific month
+    filename = f"pagerduty_incidents_october_2025.csv"
+    with open(filename, "w", newline="", encoding="utf-8") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=csv_headers)
         writer.writeheader()
         writer.writerows(output_data)
-    print(f"Report saved to pagerduty_incidents_with_notes.csv")
+    print(f"Report saved to {filename}")
 
 if __name__ == "__main__":
     main()
