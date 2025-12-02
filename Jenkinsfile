@@ -42,7 +42,8 @@ pipeline {
 
         stage('Archive Report') {
             steps {
-                archiveArtifacts artifacts: "${OUTPUT_FILE}", fingerprint: true
+                // This will archive any file ending with .csv in your workspace
+                archiveArtifacts artifacts: '*.csv', fingerprint: true
             }
         }
 
